@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "553559566907",
+    "project_id": "campuscart-d419a",
+    "storage_bucket": "campuscart-d419a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553559566907:android:b1fcae284f0c3e30ddca1e",
+        "android_client_info": {
+          "package_name": "com.agrima.campuscart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmcGQfugWLtiRS1kJG1mF2qS0IY15Uo0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
