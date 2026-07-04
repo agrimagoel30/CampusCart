@@ -23,11 +23,17 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
+    isUserLoggedIn: () -> Boolean,
+    onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     LaunchedEffect(Unit) {
         delay(2000)
-        onNavigateToLogin()
+        if (isUserLoggedIn()) {
+            onNavigateToHome()
+        } else {
+            onNavigateToLogin()
+        }
     }
 
     Box(
@@ -61,7 +67,15 @@ fun SplashScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(32.dp))
-            Button(onClick = onNavigateToLogin) {
+            Button(
+                onClick = {
+                    if (isUserLoggedIn()) {
+                        onNavigateToHome()
+                    } else {
+                        onNavigateToLogin()
+                    }
+                }
+            ) {
                 Text(text = "Skip Splash")
             }
         }

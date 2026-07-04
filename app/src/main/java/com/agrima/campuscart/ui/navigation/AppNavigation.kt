@@ -12,6 +12,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.agrima.campuscart.ui.auth.AuthViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
@@ -25,6 +26,7 @@ import com.agrima.campuscart.ui.screens.SplashScreen
 fun AppNavHost(
     navController: NavHostController,
     paddingValues: PaddingValues,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -34,6 +36,12 @@ fun AppNavHost(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
+                isUserLoggedIn = { authViewModel.isUserLoggedIn() },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
@@ -43,6 +51,7 @@ fun AppNavHost(
         }
         composable(Screen.Login.route) {
             LoginScreen(
+                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -55,6 +64,7 @@ fun AppNavHost(
         }
         composable(Screen.Register.route) {
             RegisterScreen(
+                viewModel = authViewModel,
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -82,6 +92,7 @@ fun AppNavHost(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onLogout = {
+                    authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
