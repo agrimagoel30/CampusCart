@@ -12,7 +12,9 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.agrima.campuscart.ui.auth.AuthViewModel
+import com.agrima.campuscart.ui.home.HomeViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
@@ -78,7 +80,13 @@ fun AppNavHost(
             )
         }
         composable(Screen.Home.route) {
-            HomeScreen()
+            val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+            HomeScreen(
+                viewModel = homeViewModel,
+                onNavigateToProductDetails = { productId ->
+                    // Navigation details placeholder
+                }
+            )
         }
         composable(Screen.Sell.route) {
             SellScreen()

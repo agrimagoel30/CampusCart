@@ -12,6 +12,7 @@ data class Product(
     val status: ProductStatus = ProductStatus.AVAILABLE,
     val imageUrls: List<String> = emptyList(),
     val sellerId: String = "",
+    val sellerName: String = "",
     val negotiable: Boolean = false,
     val location: String = "",
     val createdAt: Long = 0L,
