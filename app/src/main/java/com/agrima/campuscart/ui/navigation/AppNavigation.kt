@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import com.agrima.campuscart.ui.auth.AuthViewModel
 import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 import com.agrima.campuscart.ui.home.HomeViewModel
+import com.agrima.campuscart.ui.sell.SellViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
@@ -93,7 +94,11 @@ fun AppNavHost(
             )
         }
         composable(Screen.Sell.route) {
-            SellScreen()
+            val sellViewModel: SellViewModel = viewModel(factory = SellViewModel.Factory)
+            SellScreen(
+                viewModel = sellViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.Favorites.route) {
             FavoritesScreen()

@@ -68,6 +68,7 @@ class ProductRepositoryImpl(
         condition: Condition,
         imageUrls: List<String>,
         sellerId: String,
+        sellerName: String,
         negotiable: Boolean,
         location: String
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -84,6 +85,7 @@ class ProductRepositoryImpl(
                 status = ProductStatus.AVAILABLE,
                 imageUrls = imageUrls,
                 sellerId = sellerId,
+                sellerName = sellerName,
                 negotiable = negotiable,
                 location = location,
                 createdAt = currentTime,

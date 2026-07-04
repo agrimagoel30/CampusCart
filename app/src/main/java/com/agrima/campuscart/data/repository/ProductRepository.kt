@@ -17,6 +17,7 @@ interface ProductRepository {
         condition: Condition,
         imageUrls: List<String>,
         sellerId: String,
+        sellerName: String,
         negotiable: Boolean,
         location: String
     ): Result<String>
