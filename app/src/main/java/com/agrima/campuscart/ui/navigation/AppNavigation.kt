@@ -19,6 +19,7 @@ import com.agrima.campuscart.ui.auth.AuthViewModel
 import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 import com.agrima.campuscart.ui.home.HomeViewModel
 import com.agrima.campuscart.ui.sell.SellViewModel
+import com.agrima.campuscart.ui.dashboard.DashboardViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
@@ -104,7 +105,8 @@ fun AppNavHost(
             FavoritesScreen()
         }
         composable(Screen.Dashboard.route) {
-            DashboardScreen()
+            val dashboardViewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
+            DashboardScreen(viewModel = dashboardViewModel)
         }
         composable(Screen.Profile.route) {
             ProfileScreen(
