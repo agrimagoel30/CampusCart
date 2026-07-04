@@ -13,12 +13,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.agrima.campuscart.ui.auth.AuthViewModel
+import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 import com.agrima.campuscart.ui.home.HomeViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
 import com.agrima.campuscart.ui.screens.LoginScreen
+import com.agrima.campuscart.ui.screens.ProductDetailsScreen
 import com.agrima.campuscart.ui.screens.ProfileScreen
 import com.agrima.campuscart.ui.screens.RegisterScreen
 import com.agrima.campuscart.ui.screens.SellScreen
@@ -84,7 +88,7 @@ fun AppNavHost(
             HomeScreen(
                 viewModel = homeViewModel,
                 onNavigateToProductDetails = { productId ->
-                    // Navigation details placeholder
+                    navController.navigate(Screen.ProductDetails.createRoute(productId))
                 }
             )
         }
@@ -105,6 +109,19 @@ fun AppNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+        composable(
+            route = Screen.ProductDetails.route,
+            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId") ?: ""
+            val detailsViewModel: ProductDetailsViewModel = viewModel(
+                factory = ProductDetailsViewModel.provideFactory(productId)
+            )
+            ProductDetailsScreen(
+                viewModel = detailsViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

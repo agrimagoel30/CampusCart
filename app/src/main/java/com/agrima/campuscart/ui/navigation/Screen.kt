@@ -22,6 +22,9 @@ sealed class Screen(val route: String) {
     object Favorites : Screen("favorites")
     object Dashboard : Screen("dashboard")
     object Profile : Screen("profile")
+    object ProductDetails : Screen("productDetails/{productId}") {
+        fun createRoute(productId: String) = "productDetails/$productId"
+    }
 }
 
 sealed class BottomBarScreen(
