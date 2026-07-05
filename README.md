@@ -147,17 +147,27 @@ app/src/main/java/com/agrima/campuscart/
 </tr>
 </table>
 
-### Home Screen
+### Home, Product Details Screen
 
-<p align="center">
-  <img src="Screenshots/HomeScreen.png" width="250"/>
-</p>
+<table>
+<tr>
+<td align="center">
 
-### Product Details Screen
+**Home Screen**
 
-<p align="center">
-  <img src="Screenshots/ProductDetail.png" width="250"/>
-</p>
+<img src="Screenshots/HomeScreen.png" width="250"/>
+
+</td>
+
+<td align="center">
+
+**Product Details Screen**
+
+<img src="Screenshots/ProductDetail.png" width="250"/>
+
+</td>
+</tr>
+</table>
 
 ### Sell Screen
 
@@ -181,23 +191,49 @@ app/src/main/java/com/agrima/campuscart/
 </tr>
 </table>
 
-### Dashboard Screen
+### Dashboard, Favourites Screen
 
-<p align="center">
-  <img src="Screenshots/DashBoard.png" width="250"/>
-</p>
+<table>
+<tr>
+<td align="center">
 
-### Favorites Screen
+**DashBoard Screen**
 
-<p align="center">
-  <img src="Screenshots/Favourites.png" width="250"/>
-</p>
+<img src="Screenshots/DashBoard.png" width="250"/>
+
+</td>
+
+<td align="center">
+
+**Favourite Screen**
+
+<img src="Screenshots/Favourites.png" width="250"/>
+
+</td>
+</tr>
+</table>
 
 ### Profile Screen
 
-<p align="center">
-  <img src="Screenshots/Profile.png" width="250"/>
-</p>
+<table>
+<tr>
+<td align="center">
+
+**Profile Screen1**
+
+<img src="Screenshots/Profile.png" width="250"/>
+
+</td>
+
+<td align="center">
+
+**Profile Screen2**
+
+<img src="Screenshots/Profile1.png" width="250"/>
+
+</td>
+</tr>
+</table>
 
 ---
 
