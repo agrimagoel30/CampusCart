@@ -97,8 +97,8 @@ fun SellScreen(
     var categoryExpanded by remember { mutableStateOf(false) }
     var conditionExpanded by remember { mutableStateOf(false) }
 
-    val isIdle = uiState == SellUiState.Idle
-    val isLoading = !isIdle && uiState != SellUiState.Success
+    val isIdle = uiState is SellUiState.Idle || uiState is SellUiState.Error
+    val isLoading = uiState is SellUiState.UploadingImages || uiState is SellUiState.SavingProduct
 
     LaunchedEffect(uiState) {
         if (uiState is SellUiState.Success) {
@@ -190,7 +190,7 @@ fun SellScreen(
                     OutlinedTextField(
                         value = priceString,
                         onValueChange = { priceString = it },
-                        label = { Text("Price ($)") },
+                        label = { Text("Price (₹)") },
                         singleLine = true,
                         enabled = isIdle,
                         keyboardOptions = KeyboardOptions(

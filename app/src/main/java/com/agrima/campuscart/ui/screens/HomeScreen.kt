@@ -300,7 +300,7 @@ fun ProductCard(
         ) {
             // Price & Title
             Text(
-                text = "$${String.format("%.2f", product.price)}",
+                text = "₹${String.format("%.2f", product.price)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

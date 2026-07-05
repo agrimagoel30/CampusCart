@@ -189,7 +189,7 @@ fun ProductDetailsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "$${String.format("%.2f", product.price)}",
+                                    text = "₹${String.format("%.2f", product.price)}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary

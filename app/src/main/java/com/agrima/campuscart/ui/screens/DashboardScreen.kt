@@ -333,7 +333,7 @@ fun DashboardProductCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "$${String.format("%.2f", product.price)}",
+                    text = "₹${String.format("%.2f", product.price)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
