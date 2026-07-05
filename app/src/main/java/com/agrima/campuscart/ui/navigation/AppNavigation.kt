@@ -20,6 +20,7 @@ import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 import com.agrima.campuscart.ui.home.HomeViewModel
 import com.agrima.campuscart.ui.sell.SellViewModel
 import com.agrima.campuscart.ui.dashboard.DashboardViewModel
+import com.agrima.campuscart.ui.profile.ProfileViewModel
 import com.agrima.campuscart.ui.screens.DashboardScreen
 import com.agrima.campuscart.ui.screens.FavoritesScreen
 import com.agrima.campuscart.ui.screens.HomeScreen
@@ -109,7 +110,9 @@ fun AppNavHost(
             DashboardScreen(viewModel = dashboardViewModel)
         }
         composable(Screen.Profile.route) {
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
             ProfileScreen(
+                viewModel = profileViewModel,
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
