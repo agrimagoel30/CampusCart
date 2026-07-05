@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
@@ -67,8 +68,11 @@ fun HomeScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val userName by viewModel.userName.collectAsState()
 
+    val favoriteIds by viewModel.favoriteIds.collectAsState()
+
     LaunchedEffect(Unit) {
         viewModel.loadProducts()
+        viewModel.loadFavorites()
     }
 
     Column(
@@ -219,6 +223,8 @@ fun HomeScreen(
                         items(state.products) { product ->
                             ProductCard(
                                 product = product,
+                                isFavorite = favoriteIds.contains(product.id),
+                                onFavoriteClick = { viewModel.toggleFavorite(product.id) },
                                 onClick = {
                                     Toast.makeText(context, "Navigating to: ${product.title}", Toast.LENGTH_SHORT).show()
                                     onNavigateToProductDetails(product.id)
@@ -236,12 +242,17 @@ fun HomeScreen(
 @Composable
 fun ProductCard(
     product: Product,
+    isFavorite: Boolean,
+    onFavoriteClick: () -> Unit,
     onClick: () -> Unit
 ) {
     ElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = 2.dp
+        ),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
@@ -250,15 +261,19 @@ fun ProductCard(
             // Product Image
             val imageUrl = product.imageUrls.firstOrNull()
             if (imageUrl != null) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = product.title,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(130.dp)
                         .clip(MaterialTheme.shapes.medium)
-                )
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = product.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             } else {
                 Box(
                     modifier = Modifier
@@ -276,17 +291,17 @@ fun ProductCard(
                 }
             }
 
-            // Static Favorite Icon Placeholder
+            // working Favorite Icon
             IconButton(
-                onClick = {},
+                onClick = onFavoriteClick,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
                     .size(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite icon placeholder",
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite Toggle",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )

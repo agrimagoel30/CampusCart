@@ -26,7 +26,8 @@ interface ProductRepository {
     suspend fun incrementProductViews(productId: String): Result<Unit>
     
     // Favorites
-    suspend fun toggleFavorite(userId: String, productId: String): Result<Boolean>
-    suspend fun isProductFavorited(userId: String, productId: String): Result<Boolean>
-    suspend fun getFavoriteProducts(userId: String): Result<List<Product>>
+    suspend fun addToFavorites(productId: String): Result<Unit>
+    suspend fun removeFromFavorites(productId: String): Result<Unit>
+    suspend fun getFavoriteProducts(): Result<List<Product>>
+    suspend fun isFavorite(productId: String): Result<Boolean>
 }

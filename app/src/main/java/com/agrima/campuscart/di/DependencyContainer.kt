@@ -29,6 +29,6 @@ object DependencyContainer {
     }
 
     val productRepository: ProductRepository by lazy {
-        ProductRepositoryImpl(firestore)
+        ProductRepositoryImpl(firestore, auth)
     }
 }

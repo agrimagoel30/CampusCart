@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import com.agrima.campuscart.ui.auth.AuthViewModel
 import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 import com.agrima.campuscart.ui.home.HomeViewModel
+import com.agrima.campuscart.ui.favorites.FavoritesViewModel
 import com.agrima.campuscart.ui.sell.SellViewModel
 import com.agrima.campuscart.ui.dashboard.DashboardViewModel
 import com.agrima.campuscart.ui.profile.ProfileViewModel
@@ -103,7 +104,13 @@ fun AppNavHost(
             )
         }
         composable(Screen.Favorites.route) {
-            FavoritesScreen()
+            val favoritesViewModel: FavoritesViewModel = viewModel(factory = FavoritesViewModel.Factory)
+            FavoritesScreen(
+                viewModel = favoritesViewModel,
+                onNavigateToProductDetails = { productId ->
+                    navController.navigate(Screen.ProductDetails.createRoute(productId))
+                }
+            )
         }
         composable(Screen.Dashboard.route) {
             val dashboardViewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)

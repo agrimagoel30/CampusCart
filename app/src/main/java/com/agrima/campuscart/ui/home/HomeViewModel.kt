@@ -8,6 +8,7 @@ import com.agrima.campuscart.data.repository.AuthRepository
 import com.agrima.campuscart.data.repository.ProductRepository
 import com.agrima.campuscart.di.DependencyContainer
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -22,6 +23,9 @@ class HomeViewModel(
     private val _rawProducts = MutableStateFlow<List<Product>>(emptyList())
     private val _isLoading = MutableStateFlow(true)
     private val _errorMessage = MutableStateFlow<String?>(null)
+
+    private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
 
     val searchQuery = MutableStateFlow("")
     val selectedCategory = MutableStateFlow(UiCategory.ALL)
@@ -58,6 +62,7 @@ class HomeViewModel(
 
     init {
         loadProducts()
+        loadFavorites()
         loadCurrentUserName()
     }
 
@@ -74,6 +79,34 @@ class HomeViewModel(
                     _errorMessage.value = exception.message ?: "Failed to load products"
                     _isLoading.value = false
                 }
+        }
+    }
+
+    fun loadFavorites() {
+        viewModelScope.launch {
+            productRepository.getFavoriteProducts()
+                .onSuccess { list ->
+                    _favoriteIds.value = list.map { it.id }.toSet()
+                }
+        }
+    }
+
+    fun toggleFavorite(productId: String) {
+        val currentlyFavorite = _favoriteIds.value.contains(productId)
+        viewModelScope.launch {
+            if (currentlyFavorite) {
+                _favoriteIds.value = _favoriteIds.value - productId
+                productRepository.removeFromFavorites(productId)
+                    .onFailure {
+                        _favoriteIds.value = _favoriteIds.value + productId
+                    }
+            } else {
+                _favoriteIds.value = _favoriteIds.value + productId
+                productRepository.addToFavorites(productId)
+                    .onFailure {
+                        _favoriteIds.value = _favoriteIds.value - productId
+                    }
+            }
         }
     }
 

@@ -9,13 +9,15 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 
 class ProductRepositoryImpl(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) : ProductRepository {
 
     private fun DocumentSnapshot.toProduct(): Product? {
@@ -128,45 +130,49 @@ class ProductRepositoryImpl(
         }
     }
 
-    override suspend fun toggleFavorite(userId: String, productId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    override suspend fun addToFavorites(productId: String): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val favDocId = "${userId}_${productId}"
-            val favRef = firestore.collection("favorites").document(favDocId)
-            val snapshot = favRef.get().await()
-            
-            if (snapshot.exists()) {
-                favRef.delete().await()
-                false
-            } else {
-                val data = mapOf(
-                    "userId" to userId,
-                    "productId" to productId,
-                    "createdAt" to System.currentTimeMillis()
-                )
-                favRef.set(data).await()
-                true
-            }
+            val userId = auth.currentUser?.uid ?: throw Exception("User is not logged in")
+            val data = mapOf(
+                "productId" to productId,
+                "createdAt" to System.currentTimeMillis()
+            )
+            firestore.collection("users").document(userId)
+                .collection("favorites").document(productId)
+                .set(data).await()
+            Unit
         }
     }
 
-    override suspend fun isProductFavorited(userId: String, productId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    override suspend fun removeFromFavorites(productId: String): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val favDocId = "${userId}_${productId}"
-            val snapshot = firestore.collection("favorites").document(favDocId).get().await()
+            val userId = auth.currentUser?.uid ?: throw Exception("User is not logged in")
+            firestore.collection("users").document(userId)
+                .collection("favorites").document(productId)
+                .delete().await()
+            Unit
+        }
+    }
+
+    override suspend fun isFavorite(productId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        runCatching {
+            val userId = auth.currentUser?.uid ?: throw Exception("User is not logged in")
+            val snapshot = firestore.collection("users").document(userId)
+                .collection("favorites").document(productId)
+                .get().await()
             snapshot.exists()
         }
     }
 
-    override suspend fun getFavoriteProducts(userId: String): Result<List<Product>> = withContext(Dispatchers.IO) {
+    override suspend fun getFavoriteProducts(): Result<List<Product>> = withContext(Dispatchers.IO) {
         runCatching {
-            val favsSnapshot = firestore.collection("favorites")
-                .whereEqualTo("userId", userId)
+            val userId = auth.currentUser?.uid ?: throw Exception("User is not logged in")
+            val favsSnapshot = firestore.collection("users").document(userId)
+                .collection("favorites")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .await()
-                
-            val productIds = favsSnapshot.documents.mapNotNull { it.getString("productId") }
+                .get().await()
             
+            val productIds = favsSnapshot.documents.map { it.id }
             if (productIds.isEmpty()) {
                 emptyList()
             } else {
