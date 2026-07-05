@@ -124,9 +124,28 @@ app/src/main/java/com/agrima/campuscart/
 
 ## 📺 Screens
 
-### Login Screen
+### Login/Signup Screen
 
-📷 Screenshot Coming Soon
+[//]: # (📷 Screenshot Coming Soon)
+<table>
+<tr>
+<td align="center">
+
+**Login Screen**
+
+<img src="Screenshots/Login.png" width="250"/>
+
+</td>
+
+<td align="center">
+
+**Signup Screen**
+
+<img src="Screenshots/Signup.png" width="250"/>
+
+</td>
+</tr>
+</table>
 
 ### Home Screen
 
