@@ -149,33 +149,55 @@ app/src/main/java/com/agrima/campuscart/
 
 ### Home Screen
 
-📷 Screenshot Coming Soon
+<p align="center">
+  <img src="Screenshots/HomeScreen.png" width="250"/>
+</p>
 
 ### Product Details Screen
 
-📷 Screenshot Coming Soon
+<p align="center">
+  <img src="Screenshots/ProductDetail.png" width="250"/>
+</p>
 
 ### Sell Screen
 
-📷 Screenshot Coming Soon
+<table>
+<tr>
+<td align="center">
+
+**Sell Screen1**
+
+<img src="Screenshots/SellScreen.png" width="250"/>
+
+</td>
+
+<td align="center">
+
+**Sell Screen2**
+
+<img src="Screenshots/SellScreen1.png" width="250"/>
+
+</td>
+</tr>
+</table>
 
 ### Dashboard Screen
 
-📷 Screenshot Coming Soon
+<p align="center">
+  <img src="Screenshots/DashBoard.png" width="250"/>
+</p>
 
 ### Favorites Screen
 
-📷 Screenshot Coming Soon
+<p align="center">
+  <img src="Screenshots/Favourites.png" width="250"/>
+</p>
 
 ### Profile Screen
 
-📷 Screenshot Coming Soon
-
----
-
-## 🎥 Demo
-
-Demo video coming soon.
+<p align="center">
+  <img src="Screenshots/Profile.png" width="250"/>
+</p>
 
 ---
 
