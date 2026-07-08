@@ -51,8 +51,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.agrima.campuscart.ui.profile.ProfileUiState
 import com.agrima.campuscart.ui.profile.ProfileViewModel
+import com.joelkanyi.jcomposecountrycodepicker.component.CountrySelectionDialog
+import com.joelkanyi.jcomposecountrycodepicker.component.rememberKomposeCountryCodePickerState
+import com.joelkanyi.jcomposecountrycodepicker.data.Country
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, com.joelkanyi.jcomposecountrycodepicker.annotation.RestrictedApi::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
@@ -68,11 +74,21 @@ fun ProfileScreen(
 
     var isFormInitialized by remember { mutableStateOf(false) }
 
+    var countryCode by remember { mutableStateOf("+91") }
+    var showCountryDialog by remember { mutableStateOf(false) }
+    val pickerState = rememberKomposeCountryCodePickerState(
+        defaultCountryCode = "in",
+        limitedCountries = emptyList(),
+        showCountryCode = true,
+        showCountryFlag = true,
+    )
+
     LaunchedEffect(uiState) {
         if (uiState is ProfileUiState.Success) {
             val successState = uiState as ProfileUiState.Success
             if (!isFormInitialized) {
                 name = successState.user.name
+                countryCode = successState.user.countryCode.ifBlank { "+91" }
                 phone = successState.user.phone
                 campus = successState.user.campus ?: ""
                 email = successState.user.email
@@ -81,10 +97,70 @@ fun ProfileScreen(
             if (successState.saveSuccess) {
                 Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
                 name = successState.user.name
+                countryCode = successState.user.countryCode.ifBlank { "+91" }
                 phone = successState.user.phone
                 campus = successState.user.campus ?: ""
                 viewModel.clearSaveSuccess()
             }
+        }
+    }
+
+    LaunchedEffect(countryCode) {
+        if (countryCode.isNotEmpty()) {
+            val iso = when (countryCode.trim()) {
+                "+91" -> "IN"
+                "+1" -> "US"
+                "+44" -> "GB"
+                "+61" -> "AU"
+                "+86" -> "CN"
+                "+33" -> "FR"
+                "+49" -> "DE"
+                "+81" -> "JP"
+                "+971" -> "AE"
+                "+7" -> "RU"
+                "+55" -> "BR"
+                "+27" -> "ZA"
+                "+62" -> "ID"
+                "+92" -> "PK"
+                "+880" -> "BD"
+                "+90" -> "TR"
+                "+39" -> "IT"
+                "+34" -> "ES"
+                "+65" -> "SG"
+                "+60" -> "MY"
+                "+66" -> "TH"
+                "+84" -> "VN"
+                "+63" -> "PH"
+                "+82" -> "KR"
+                "+966" -> "SA"
+                "+20" -> "EG"
+                "+98" -> "IR"
+                "+31" -> "NL"
+                "+41" -> "CH"
+                "+46" -> "SE"
+                "+47" -> "NO"
+                "+45" -> "DK"
+                "+353" -> "IE"
+                "+64" -> "NZ"
+                "+52" -> "MX"
+                "+54" -> "AR"
+                "+56" -> "CL"
+                "+57" -> "CO"
+                "+51" -> "PE"
+                "+58" -> "VE"
+                "+32" -> "BE"
+                "+43" -> "AT"
+                "+351" -> "PT"
+                "+30" -> "GR"
+                "+48" -> "PL"
+                "+380" -> "UA"
+                "+420" -> "CZ"
+                "+36" -> "HU"
+                "+40" -> "RO"
+                "+358" -> "FI"
+                else -> "IN"
+            }
+            pickerState.setCode(iso)
         }
     }
 
@@ -183,18 +259,78 @@ fun ProfileScreen(
                         )
 
                         // Phone Number Input
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = { phone = it },
-                            label = { Text("Phone Number") },
-                            singleLine = true,
-                            enabled = !isSaving,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Phone,
-                                imeAction = ImeAction.Next
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(
+                                onClick = { showCountryDialog = true },
+                                shape = RoundedCornerShape(4.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                modifier = Modifier
+                                    .height(56.dp)
+                                    .width(110.dp),
+                                enabled = !isSaving,
+                                contentPadding = PaddingValues(horizontal = 4.dp)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val selectedCountry = pickerState.countryList.find {
+                                        it.code.equals(pickerState.countryCode, ignoreCase = true)
+                                    }
+                                    selectedCountry?.let { country ->
+                                        Icon(
+                                            painter = painterResource(id = country.flag),
+                                            contentDescription = country.name,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = Color.Unspecified
+                                        )
+                                        Text(
+                                            text = country.phoneNoCode,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    } ?: run {
+                                        Text(
+                                            text = countryCode,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = phone,
+                                onValueChange = { phone = it },
+                                label = { Text("Phone Number") },
+                                singleLine = true,
+                                enabled = !isSaving,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Phone,
+                                    imeAction = ImeAction.Next
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        if (showCountryDialog) {
+                            CountrySelectionDialog(
+                                countryList = pickerState.countryList,
+                                onDismissRequest = { showCountryDialog = false },
+                                onSelected = { country ->
+                                    countryCode = country.phoneNoCode
+                                    pickerState.setCode(country.code)
+                                    showCountryDialog = false
+                                },
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
 
                         // Campus Input
                         OutlinedTextField(
@@ -258,7 +394,7 @@ fun ProfileScreen(
 
                         // Save Button
                         Button(
-                            onClick = { viewModel.updateProfile(name, phone, campus) },
+                            onClick = { viewModel.updateProfile(name, countryCode, phone, campus) },
                             enabled = !isSaving,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier

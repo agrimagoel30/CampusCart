@@ -4,6 +4,7 @@ data class User(
     val uid: String = "",
     val name: String = "",
     val email: String = "",
+    val countryCode: String = "+91",
     val phone: String = "",
     val avatarUrl: String? = null,
     val campus: String? = null,

@@ -42,7 +42,7 @@ class ProfileViewModel(
         }
     }
 
-    fun updateProfile(name: String, phone: String, campus: String?) {
+    fun updateProfile(name: String, countryCode: String, phone: String, campus: String?) {
         val currentState = _uiState.value
         if (currentState !is ProfileUiState.Success) return
 
@@ -59,8 +59,8 @@ class ProfileViewModel(
                 _uiState.value = currentState.copy(errorMessage = "Phone number must contain only digits")
                 return
             }
-            if (trimmedPhone.length !in 10..15) {
-                _uiState.value = currentState.copy(errorMessage = "Phone number must be between 10 and 15 digits")
+            if (trimmedPhone.length !in 6..15) {
+                _uiState.value = currentState.copy(errorMessage = "Phone number must be between 6 and 15 digits")
                 return
             }
         }
@@ -71,6 +71,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             val updatedUser = currentUser.copy(
                 name = name.trim(),
+                countryCode = countryCode.trim(),
                 phone = trimmedPhone,
                 campus = campus?.trim()?.ifBlank { null },
                 updatedAt = System.currentTimeMillis()

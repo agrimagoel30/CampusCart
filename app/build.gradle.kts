@@ -61,6 +61,9 @@ dependencies {
     // OkHttp (Cloudinary Uploads)
     implementation(libs.okhttp)
 
+    // Country Code Picker
+    implementation("io.github.joelkanyi:komposecountrycodepicker:1.2.2")
+
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-analytics")

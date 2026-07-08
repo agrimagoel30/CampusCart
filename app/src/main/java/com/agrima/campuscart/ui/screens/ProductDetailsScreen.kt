@@ -20,6 +20,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -110,7 +111,6 @@ fun ProductDetailsScreen(
                 is ProductDetailsUiState.Success -> {
                     val product = state.product
                     val seller = state.seller
-                    val showContactButtons = seller != null && seller.phone.isNotBlank()
 
                     Column(
                         modifier = Modifier
@@ -319,34 +319,54 @@ fun ProductDetailsScreen(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             // Call & WhatsApp Buttons
-                            if (showContactButtons) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    Button(
-                                        onClick = { openWhatsApp(context, seller.phone, product.title) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF25D366),
-                                            contentColor = Color.White
-                                        ),
-                                        modifier = Modifier.weight(1f)
+                            if (seller != null) {
+                                if (seller.phone.isNotBlank()) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                                     ) {
-                                        Icon(imageVector = Icons.AutoMirrored.Filled.Message, contentDescription = "WhatsApp")
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("WhatsApp")
-                                    }
+                                        Button(
+                                            onClick = { openWhatsApp(context, seller.countryCode, seller.phone, product.title) },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF25D366),
+                                                contentColor = Color.White
+                                            ),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(imageVector = Icons.AutoMirrored.Filled.Message, contentDescription = "WhatsApp")
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("WhatsApp")
+                                        }
 
-                                    Button(
-                                        onClick = { callNumber(context, seller.phone) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary
-                                        ),
-                                        modifier = Modifier.weight(1f)
+                                        Button(
+                                            onClick = { callNumber(context, seller.countryCode, seller.phone) },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary
+                                            ),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(imageVector = Icons.Default.Call, contentDescription = "Call")
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Call")
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 8.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(imageVector = Icons.Default.Call, contentDescription = "Call")
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Call")
+                                        Text(
+                                            text = "Seller has not provided a phone number.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
                                 }
                             }
@@ -358,10 +378,11 @@ fun ProductDetailsScreen(
     }
 }
 
-private fun openWhatsApp(context: Context, phoneNumber: String, productTitle: String) {
+private fun openWhatsApp(context: Context, countryCode: String, phone: String, productTitle: String) {
     try {
         val message = "Hi, I am interested in your listing: '$productTitle' on CampusCart."
-        val cleanPhone = phoneNumber.replace("+", "").replace(" ", "").trim()
+        val rawNumber = "${countryCode.trim()}${phone.trim()}"
+        val cleanPhone = rawNumber.replace("+", "").replace(" ", "").replace("-", "").trim()
         val url = "https://wa.me/$cleanPhone?text=${Uri.encode(message)}"
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         context.startActivity(intent)
@@ -370,9 +391,12 @@ private fun openWhatsApp(context: Context, phoneNumber: String, productTitle: St
     }
 }
 
-private fun callNumber(context: Context, phoneNumber: String) {
+private fun callNumber(context: Context, countryCode: String, phone: String) {
     try {
-        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNumber"))
+        val cleanCountryCode = countryCode.trim()
+        val cleanPhone = phone.trim()
+        val formattedNumber = "$cleanCountryCode$cleanPhone"
+        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$formattedNumber"))
         context.startActivity(intent)
     } catch (e: Exception) {
         Toast.makeText(context, "Could not open dialer", Toast.LENGTH_SHORT).show()
