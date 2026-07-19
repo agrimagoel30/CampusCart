@@ -20,8 +20,43 @@ class ProductDetailsViewModel(
     private val _uiState = MutableStateFlow<ProductDetailsUiState>(ProductDetailsUiState.Loading)
     val uiState: StateFlow<ProductDetailsUiState> = _uiState.asStateFlow()
 
+    val currentUserId: String? get() = authRepository.currentUserId
+
     init {
         loadProductDetails()
+    }
+
+    fun reserveProduct() {
+        val currentState = _uiState.value
+        if (currentState !is ProductDetailsUiState.Success) return
+
+        val buyerId = authRepository.currentUserId
+        if (buyerId == null) {
+            _uiState.value = currentState.copy(bookingState = BookingState.Error("User is not logged in"))
+            return
+        }
+
+        // Set booking state to Loading, leaving the rest of the product data unchanged
+        _uiState.value = currentState.copy(bookingState = BookingState.Loading)
+
+        viewModelScope.launch {
+            productRepository.reserveProduct(productId, buyerId)
+                .onSuccess {
+                    _uiState.value = currentState.copy(bookingState = BookingState.Success)
+                    // Reload product details to update status quietly without flashing loading screen
+                    loadProductDetailsAfterBooking()
+                }
+                .onFailure { error ->
+                    _uiState.value = currentState.copy(bookingState = BookingState.Error(error.message ?: "Failed to reserve product"))
+                }
+        }
+    }
+
+    fun clearBookingState() {
+        val currentState = _uiState.value
+        if (currentState is ProductDetailsUiState.Success) {
+            _uiState.value = currentState.copy(bookingState = BookingState.Idle)
+        }
     }
 
     fun loadProductDetails() {
@@ -29,16 +64,12 @@ class ProductDetailsViewModel(
         viewModelScope.launch {
             productRepository.getProductById(productId)
                 .onSuccess { product ->
-                    // Increment the product view count only after successful load
                     incrementProductViews()
-
-                    // Fetch seller profile to retrieve phone/contact details
                     authRepository.getUserProfile(product.sellerId)
                         .onSuccess { seller ->
                             _uiState.value = ProductDetailsUiState.Success(product, seller)
                         }
                         .onFailure {
-                            // If seller profile fails to load, still show product but without phone contact
                             _uiState.value = ProductDetailsUiState.Success(product, null)
                         }
                 }
@@ -46,6 +77,24 @@ class ProductDetailsViewModel(
                     _uiState.value = ProductDetailsUiState.Error(
                         error.message ?: "Failed to load product details"
                     )
+                }
+        }
+    }
+
+    private fun loadProductDetailsAfterBooking() {
+        // Loads details quietly on success without flashing full screen loading
+        viewModelScope.launch {
+            productRepository.getProductById(productId)
+                .onSuccess { product ->
+                    authRepository.getUserProfile(product.sellerId)
+                        .onSuccess { seller ->
+                            val currentState = _uiState.value
+                            if (currentState is ProductDetailsUiState.Success) {
+                                _uiState.value = ProductDetailsUiState.Success(product, seller, currentState.bookingState)
+                            } else {
+                                _uiState.value = ProductDetailsUiState.Success(product, seller)
+                            }
+                        }
                 }
         }
     }

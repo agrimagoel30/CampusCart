@@ -24,5 +24,7 @@ data class Product(
     val viewsCount: Int = 0,
     
     @get:PropertyName("isReported")
-    val isReported: Boolean = false
+    val isReported: Boolean = false,
+    
+    val reservedBy: String = ""
 )

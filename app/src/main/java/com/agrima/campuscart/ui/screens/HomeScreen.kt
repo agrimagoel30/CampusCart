@@ -50,6 +50,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.agrima.campuscart.data.model.Product
 import com.agrima.campuscart.ui.home.HomeUiState
@@ -69,10 +73,20 @@ fun HomeScreen(
     val userName by viewModel.userName.collectAsState()
 
     val favoriteIds by viewModel.favoriteIds.collectAsState()
+    val currentUserId = viewModel.currentUserId
 
-    LaunchedEffect(Unit) {
-        viewModel.loadProducts()
-        viewModel.loadFavorites()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadProducts()
+                viewModel.loadFavorites()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(
@@ -225,6 +239,7 @@ fun HomeScreen(
                                 product = product,
                                 isFavorite = favoriteIds.contains(product.id),
                                 onFavoriteClick = { viewModel.toggleFavorite(product.id) },
+                                currentUserId = currentUserId,
                                 onClick = {
                                     Toast.makeText(context, "Navigating to: ${product.title}", Toast.LENGTH_SHORT).show()
                                     onNavigateToProductDetails(product.id)
@@ -244,6 +259,7 @@ fun ProductCard(
     product: Product,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
+    currentUserId: String? = null,
     onClick: () -> Unit
 ) {
     ElevatedCard(
@@ -349,8 +365,19 @@ fun ProductCard(
                 SuggestionChip(
                     onClick = {},
                     label = {
+                        val statusText = when (product.status) {
+                            com.agrima.campuscart.data.model.ProductStatus.RESERVED -> {
+                                if (currentUserId != null && product.reservedBy == currentUserId) {
+                                    "Booked by You"
+                                } else {
+                                    "Reserved"
+                                }
+                            }
+                            com.agrima.campuscart.data.model.ProductStatus.SOLD -> "Sold"
+                            else -> product.status.displayName
+                        }
                         Text(
-                            text = product.status.displayName,
+                            text = statusText,
                             style = MaterialTheme.typography.labelSmall
                         )
                     },

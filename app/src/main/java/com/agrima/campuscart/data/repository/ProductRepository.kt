@@ -22,6 +22,7 @@ interface ProductRepository {
         location: String
     ): Result<String>
     suspend fun updateProductStatus(productId: String, status: ProductStatus): Result<Unit>
+    suspend fun reserveProduct(productId: String, buyerId: String): Result<Unit>
     suspend fun deleteProduct(productId: String): Result<Unit> // soft delete
     suspend fun incrementProductViews(productId: String): Result<Unit>
     

@@ -30,6 +30,8 @@ class HomeViewModel(
     val searchQuery = MutableStateFlow("")
     val selectedCategory = MutableStateFlow(UiCategory.ALL)
     val userName = MutableStateFlow("User")
+    
+    val currentUserId: String? get() = authRepository.currentUserId
 
     val uiState: StateFlow<HomeUiState> = combine(
         _rawProducts,

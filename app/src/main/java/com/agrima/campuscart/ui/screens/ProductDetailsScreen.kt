@@ -44,6 +44,7 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.agrima.campuscart.ui.details.BookingState
 import com.agrima.campuscart.ui.details.ProductDetailsUiState
 import com.agrima.campuscart.ui.details.ProductDetailsViewModel
 
@@ -66,6 +68,23 @@ fun ProductDetailsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val bookingState = (uiState as? ProductDetailsUiState.Success)?.bookingState ?: BookingState.Idle
+    val currentUserId = viewModel.currentUserId
+
+    LaunchedEffect(bookingState) {
+        when (bookingState) {
+            is BookingState.Success -> {
+                Toast.makeText(context, "Product reserved successfully!", Toast.LENGTH_SHORT).show()
+                viewModel.clearBookingState()
+            }
+            is BookingState.Error -> {
+                val msg = (bookingState as BookingState.Error).message
+                Toast.makeText(context, "Failed to reserve: $msg", Toast.LENGTH_LONG).show()
+                viewModel.clearBookingState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -194,9 +213,20 @@ fun ProductDetailsScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
+                                val statusText = when (product.status) {
+                                    com.agrima.campuscart.data.model.ProductStatus.RESERVED -> {
+                                        if (currentUserId != null && product.reservedBy == currentUserId) {
+                                            "Booked by You"
+                                        } else {
+                                            "Reserved"
+                                        }
+                                    }
+                                    com.agrima.campuscart.data.model.ProductStatus.SOLD -> "Sold"
+                                    else -> product.status.displayName
+                                }
                                 SuggestionChip(
                                     onClick = {},
-                                    label = { Text(product.status.displayName) }
+                                    label = { Text(statusText) }
                                 )
                             }
 
@@ -318,8 +348,70 @@ fun ProductDetailsScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
+                            // Reservation Section
+                            if (product.sellerId != currentUserId) {
+                                val isReserved = product.status == com.agrima.campuscart.data.model.ProductStatus.RESERVED
+                                val isSold = product.status == com.agrima.campuscart.data.model.ProductStatus.SOLD
+                                val isAvailable = product.status == com.agrima.campuscart.data.model.ProductStatus.AVAILABLE
+                                val isBooking = bookingState is BookingState.Loading
+                                
+                                val buttonEnabled = isAvailable && !isBooking
+                                val buttonText = when (product.status) {
+                                    com.agrima.campuscart.data.model.ProductStatus.AVAILABLE -> "Reserve Product"
+                                    com.agrima.campuscart.data.model.ProductStatus.RESERVED -> {
+                                        if (product.reservedBy == currentUserId) "Booked by You" else "Reserved"
+                                    }
+                                    com.agrima.campuscart.data.model.ProductStatus.SOLD -> "Sold"
+                                }
+
+                                Button(
+                                    onClick = { viewModel.reserveProduct() },
+                                    enabled = buttonEnabled,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isReserved && product.reservedBy == currentUserId) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
+                                        disabledContainerColor = if (isReserved && product.reservedBy == currentUserId) {
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                        }
+                                    )
+                                ) {
+                                    if (isBooking) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text(
+                                            text = buttonText, 
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (!buttonEnabled && isReserved && product.reservedBy == currentUserId) {
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            } else if (!buttonEnabled) {
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                            } else {
+                                                MaterialTheme.colorScheme.onPrimary
+                                            }
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+
                             // Call & WhatsApp Buttons
-                            if (seller != null) {
+                            val showContactButtons = when (product.status) {
+                                com.agrima.campuscart.data.model.ProductStatus.AVAILABLE -> true
+                                com.agrima.campuscart.data.model.ProductStatus.RESERVED -> product.reservedBy == currentUserId
+                                com.agrima.campuscart.data.model.ProductStatus.SOLD -> false
+                            }
+
+                            if (showContactButtons && seller != null) {
                                 if (seller.phone.isNotBlank()) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),

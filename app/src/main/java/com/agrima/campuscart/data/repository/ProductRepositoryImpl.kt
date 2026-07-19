@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 class ProductRepositoryImpl(
@@ -27,16 +28,47 @@ class ProductRepositoryImpl(
 
     override suspend fun getProducts(category: Category?): Result<List<Product>> = withContext(Dispatchers.IO) {
         runCatching {
-            var query = firestore.collection("products")
-                .whereEqualTo("isSoftDeleted", false)
-                .whereEqualTo("status", ProductStatus.AVAILABLE.name)
+            coroutineScope {
+                val productsCollection = firestore.collection("products")
+                
+                var availableQuery = productsCollection
+                    .whereEqualTo("isSoftDeleted", false)
+                    .whereEqualTo("status", ProductStatus.AVAILABLE.name)
+                    
+                var reservedQuery = productsCollection
+                    .whereEqualTo("isSoftDeleted", false)
+                    .whereEqualTo("status", ProductStatus.RESERVED.name)
 
-            if (category != null) {
-                query = query.whereEqualTo("category", category.name)
+                var soldQuery = productsCollection
+                    .whereEqualTo("isSoftDeleted", false)
+                    .whereEqualTo("status", ProductStatus.SOLD.name)
+
+                if (category != null) {
+                    availableQuery = availableQuery.whereEqualTo("category", category.name)
+                    reservedQuery = reservedQuery.whereEqualTo("category", category.name)
+                    soldQuery = soldQuery.whereEqualTo("category", category.name)
+                }
+
+                val availableDeferred = async {
+                    availableQuery.orderBy("createdAt", Query.Direction.DESCENDING).get().await()
+                }
+                val reservedDeferred = async {
+                    reservedQuery.orderBy("createdAt", Query.Direction.DESCENDING).get().await()
+                }
+                val soldDeferred = async {
+                    soldQuery.orderBy("createdAt", Query.Direction.DESCENDING).get().await()
+                }
+
+                val availableSnapshot = availableDeferred.await()
+                val reservedSnapshot = reservedDeferred.await()
+                val soldSnapshot = soldDeferred.await()
+
+                val availableProducts = availableSnapshot.documents.mapNotNull { it.toProduct() }
+                val reservedProducts = reservedSnapshot.documents.mapNotNull { it.toProduct() }
+                val soldProducts = soldSnapshot.documents.mapNotNull { it.toProduct() }
+
+                (availableProducts + reservedProducts + soldProducts).sortedByDescending { it.createdAt }
             }
-
-            val snapshot = query.orderBy("createdAt", Query.Direction.DESCENDING).get().await()
-            snapshot.documents.mapNotNull { it.toProduct() }
         }
     }
 
@@ -103,10 +135,81 @@ class ProductRepositoryImpl(
 
     override suspend fun updateProductStatus(productId: String, status: ProductStatus): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            firestore.collection("products").document(productId).update(
-                "status", status.name,
-                "updatedAt", System.currentTimeMillis()
-            ).await()
+            val userId = auth.currentUser?.uid ?: throw Exception("User is not logged in")
+            val docRef = firestore.collection("products").document(productId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                if (!snapshot.exists()) {
+                    throw Exception("Product not found")
+                }
+                val sellerId = snapshot.getString("sellerId")
+                if (sellerId != userId) {
+                    throw Exception("Only the seller can update the product status")
+                }
+                
+                val currentStatusString = snapshot.getString("status") ?: ProductStatus.AVAILABLE.name
+                val currentStatus = ProductStatus.valueOf(currentStatusString)
+                
+                // Enforce allowed seller transitions:
+                // - AVAILABLE -> SOLD
+                // - RESERVED -> AVAILABLE
+                // - RESERVED -> SOLD
+                val isValidTransition = when (currentStatus) {
+                    ProductStatus.AVAILABLE -> status == ProductStatus.SOLD
+                    ProductStatus.RESERVED -> status == ProductStatus.AVAILABLE || status == ProductStatus.SOLD
+                    ProductStatus.SOLD -> false
+                }
+                
+                if (!isValidTransition) {
+                    throw Exception("Invalid status transition from $currentStatus to $status")
+                }
+                
+                val updateMap = mutableMapOf<String, Any>(
+                    "status" to status.name,
+                    "updatedAt" to System.currentTimeMillis()
+                )
+                
+                if (currentStatus == ProductStatus.RESERVED && status == ProductStatus.AVAILABLE) {
+                    updateMap["reservedBy"] = ""
+                }
+                
+                transaction.update(docRef, updateMap)
+            }.await()
+            Unit
+        }
+    }
+
+    override suspend fun reserveProduct(productId: String, buyerId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val docRef = firestore.collection("products").document(productId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                if (!snapshot.exists()) {
+                    throw Exception("Product not found")
+                }
+                val statusString = snapshot.getString("status") ?: ProductStatus.AVAILABLE.name
+                val isSoftDeleted = snapshot.getBoolean("isSoftDeleted") ?: false
+                val sellerId = snapshot.getString("sellerId")
+                
+                if (isSoftDeleted) {
+                    throw Exception("Product has been deleted")
+                }
+                if (sellerId == buyerId) {
+                    throw Exception("You cannot reserve your own product.")
+                }
+                if (statusString != ProductStatus.AVAILABLE.name) {
+                    throw Exception("Product is no longer available for booking")
+                }
+                
+                transaction.update(
+                    docRef,
+                    mapOf(
+                        "status" to ProductStatus.RESERVED.name,
+                        "reservedBy" to buyerId,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                )
+            }.await()
             Unit
         }
     }
